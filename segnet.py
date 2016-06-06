@@ -134,17 +134,17 @@ def create_decoding_layers():
         Convolution2D(512, kernel, kernel, border_mode='valid'),
         BatchNormalization(),
 
-        UnPooling2D(poolsize=(pool_size,pool_size)),
+        UpSampling2D(size=(pool_size,pool_size)),
         ZeroPadding2D(padding=(pad,pad)),
-        Convolution2D(256, kernel, kernel, border_mode='same'),
+        Convolution2D(256, kernel, kernel, border_mode='valid'),
         BatchNormalization(),
 
-        UnPooling2D(poolsize=(pool_size,pool_size)),
+        UpSampling2D(size=(pool_size,pool_size)),
         ZeroPadding2D(padding=(pad,pad)),
         Convolution2D(128, kernel, kernel, border_mode='valid'),
         BatchNormalization(),
 
-        UnPooling2D(poolsize=(pool_size,pool_size)),
+        UpSampling2D(size=(pool_size,pool_size)),
         ZeroPadding2D(padding=(pad,pad)),
         Convolution2D(filter_size, kernel, kernel, border_mode='valid'),
         BatchNormalization(),
@@ -164,7 +164,7 @@ for l in autoencoder.decoding_layers:
 
 autoencoder.add(Convolution2D(12, 1, 1, border_mode='valid',))
 import ipdb; ipdb.set_trace()
-autoencoder.add(Reshape((12,-1), input_shape=(12,360,480)))
+autoencoder.add(Reshape((12,data_shape), input_shape=(12,360,480)))
 autoencoder.add(Permute((2, 1)))
 autoencoder.add(Activation('softmax'))
 #from keras.optimizers import SGD
