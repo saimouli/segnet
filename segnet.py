@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 import os
 os.environ['KERAS_BACKEND'] = 'theano'
-os.environ['THEANO_FLAGS']='mode=FAST_RUN,device=gpu0,floatX=float32,NanGuardMode=True,optimizer=fast_compile'
+os.environ['THEANO_FLAGS']='mode=FAST_RUN,device=gpu0,floatX=float32,optimizer=fast_compile'
 
 import pylab as pl
 import matplotlib.cm as cm
@@ -12,15 +12,14 @@ import theano.tensor as T
 np.random.seed(1337) # for reproducibility
 
 from keras.datasets import mnist
-import keras.layers.containers as containers
 from keras.layers.noise import GaussianNoise
 import keras.models as models
-import keras.layers.containers as containers
-from keras.layers.core import Layer, Dense, Dropout, Activation, Flatten, Reshape, AutoEncoder, Merge, Permute
+from keras.layers.core import Layer, Dense, Dropout, Activation, Flatten, Reshape, Merge, Permute
 from keras.layers.convolutional import Convolution2D, MaxPooling2D, UpSampling2D, ZeroPadding2D
 from keras.layers.normalization import BatchNormalization
 from keras.utils import np_utils
 from keras.regularizers import ActivityRegularizer
+from keras.utils.visualize_util import plot
 
 from keras import backend as K
 
@@ -45,7 +44,7 @@ def normalized(rgb):
     return norm
 
 def binarylab(labels):
-    x = np.zeros([360,480,12])    
+    x = np.zeros([360,480,12])
     for i in range(360):
         for j in range(480):
             x[i,j,labels[i][j]]=1
@@ -73,7 +72,6 @@ class UnPooling2D(Layer):
     """A 2D Repeat layer"""
     def __init__(self, poolsize=(2, 2)):
         super(UnPooling2D, self).__init__()
-        self.input = T.tensor4()
         self.poolsize = poolsize
 
     @property
@@ -93,7 +91,7 @@ class UnPooling2D(Layer):
     def get_config(self):
         return {"name":self.__class__.__name__,
             "poolsize":self.poolsize}
-    
+
 def create_encoding_layers():
     kernel = 3
     filter_size = 64
@@ -138,7 +136,7 @@ def create_decoding_layers():
 
         UnPooling2D(poolsize=(pool_size,pool_size)),
         ZeroPadding2D(padding=(pad,pad)),
-        Convolution2D(256, kernel, kernel, border_mode='valid'),
+        Convolution2D(256, kernel, kernel, border_mode='same'),
         BatchNormalization(),
 
         UnPooling2D(poolsize=(pool_size,pool_size)),
@@ -165,12 +163,17 @@ for l in autoencoder.decoding_layers:
     autoencoder.add(l)
 
 autoencoder.add(Convolution2D(12, 1, 1, border_mode='valid',))
-autoencoder.add(Reshape((12,data_shape)))
+import ipdb; ipdb.set_trace()
+autoencoder.add(Reshape((12,-1), input_shape=(12,360,480)))
 autoencoder.add(Permute((2, 1)))
 autoencoder.add(Activation('softmax'))
 #from keras.optimizers import SGD
 #optimizer = SGD(lr=0.01, momentum=0.8, decay=0., nesterov=False)
 autoencoder.compile(loss="categorical_crossentropy", optimizer='adadelta')
+
+current_dir = os.path.dirname(os.path.realpath(__file__))
+model_path = os.path.join(current_dir, "autoencoder.png")
+plot(model_path, to_file=model_path, show_shapes=True)
 
 nb_epoch = 100
 batch_size = 14
